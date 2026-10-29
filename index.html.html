@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Le Manoir des Secrets</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#140a22;--bg:#2a1650;--paper:#fff0cf;--acc:#ffb703;--red:#ef476f;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(circle at 50% 0,#4a2a8a,var(--bg) 60%,#0d0620) fixed;color:var(--paper);font:500 17px Fredoka,'Comic Sans MS',system-ui,sans-serif;display:flex;justify-content:center}
+body::after{content:'';position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;animation:fl 11s infinite}
+@keyframes fl{0%,92%,96%,100%{opacity:0}93%{opacity:.35}94%{opacity:0}95%{opacity:.2}}
+#app{width:100%;max-width:760px;padding:10px;display:flex;flex-direction:column}
+h1,h2,.big{font-family:Bangers,Impact,sans-serif;letter-spacing:2px;font-weight:400;margin:.2em 0;text-shadow:3px 3px 0 var(--ink)}
+h2{font-size:34px}
+.card h2{text-shadow:none}
+p{margin:.5em 0;line-height:1.4}
+button{font:700 17px Fredoka,'Comic Sans MS',sans-serif;background:var(--acc);color:var(--ink);border:3px solid var(--ink);border-radius:14px;padding:10px 18px;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+button.s{background:var(--paper)}
+.card{background:var(--paper);color:var(--ink);border:4px solid var(--ink);border-radius:18px;padding:14px;box-shadow:6px 6px 0 var(--ink)}
+.row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:center}
+#hud{display:flex;gap:10px;align-items:center;padding:6px 0}
+#hud[hidden],#ov[hidden]{display:none}
+#lv{font-family:Bangers,Impact,sans-serif;font-size:22px;letter-spacing:1px;white-space:nowrap}
+.bar{flex:1;min-width:70px;height:20px;border:3px solid var(--ink);border-radius:10px;background:#3b2a55;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff7b00,#ffd60a);transition:width .25s}
+#stage{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;text-align:center}
+.scene{position:relative;height:340px;border:4px solid var(--ink);border-radius:18px;overflow:hidden;box-shadow:6px 6px 0 var(--ink)}
+.it{position:absolute;cursor:pointer;user-select:none;filter:drop-shadow(2px 2px 0 var(--ink));transform:translate(-50%,-50%)}
+.it.ok{opacity:.15;pointer-events:none}
+.bl{animation:bl .5s 3}
+@keyframes bl{50%{transform:translate(-50%,-50%) scale(2.2)}}
+.shake{animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.bt{width:84px;height:84px;border-radius:50%;font-size:38px;opacity:.5;padding:0}
+.bt.on{opacity:1;transform:scale(1.18);box-shadow:0 0 28px #fff}
+.gh{font-size:44px;animation:fy 2.5s ease-in-out infinite}
+@keyframes fy{50%{transform:translateY(-12px)}}
+.suspects .card{width:210px}
+.dg{font-family:Bangers,Impact,sans-serif;font-size:60px;color:var(--paper);text-shadow:3px 3px 0 var(--ink)}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:14px;padding:8px 16px;opacity:0;pointer-events:none;transition:.25s;z-index:9;box-shadow:0 4px 0 var(--ink)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#ov{position:fixed;inset:0;background:#000b;display:grid;place-items:center;padding:16px;z-index:5}
+#ov .card{max-width:480px;width:100%;text-align:left}
+.cl{padding:6px 0;border-bottom:2px dashed #b9a37a}
+.pt{font-size:46px;display:inline-block;animation:sw 3s ease-in-out infinite}@keyframes sw{25%{transform:rotate(-6deg) translateX(-3px)}75%{transform:rotate(6deg) translateX(3px)}}.pt.pn{animation:sh .3s 4}.pt.wk{animation:wk 2.4s ease-in-out infinite}@keyframes wk{50%{transform:translateX(12px)}}.cc{width:104px;padding:8px;cursor:pointer;text-align:center;font-size:14px;position:relative}.cc small{display:block}.bb{position:absolute;top:-6px;right:0;font-size:20px}.pb{min-width:120px}.lk{opacity:.55}
+@media(prefers-reduced-motion:reduce){body::after,.gh{animation:none}}
+</style></head><body>
+<div id="app">
+<header id="hud" hidden><span id="lv"></span><span id="hp"></span><div class="bar" title="Bougie"><i id="cd"></i></div><button id="jb" class="s" title="Journal">📓</button></header>
+<main id="stage"></main>
+</div>
+<div id="ov" hidden></div><div id="toast"></div>
+<script>
+const $=q=>document.querySelector(q),R=n=>Math.random()*n|0,shuf=a=>a.sort(()=>Math.random()-.5);
+const SUS=[
+{n:'Mme Brioche',e:'👩‍🍳',r:'La cuisinière',p:'plats',o:'sucrée',m:'gauche'},
+{n:'M. Corbeau',e:'🤵',r:'Le majordome',p:'plats',o:'de tabac',m:'droite'},
+{n:'Lila',e:'👧',r:'La nièce',p:'à talons',o:'sucrée',m:'gauche'}];
+const L=['La Bibliothèque','La Cuisine','Le Couloir','Le Bureau'],RATE=[.7,.9,1.1,1.3];
+const IN=[`Minuit. Lord Vance gît sans vie et l’orage a coupé le courant. Fouille la bibliothèque : trouve les 3 objets cachés. Chaque erreur fait fondre ta bougie !`,
+`Dans la cuisine, des fioles ensorcelées s’allument. Répète chaque séquence sans te tromper : 3 manches, de plus en plus longues.`,
+`Le couloir est hanté ! Des fantômes-gardiens balancent leurs lanternes. Atteins la porte du fond 🚪 sans te faire repérer.`,
+`Dernière pièce : le bureau de Lord Vance. Son coffre cache le testament. Relis ton journal 📓 pour trouver le code.`];
+const BG=['repeating-linear-gradient(0deg,#4a2c14 0 6px,#7a4a22 6px 62px)','conic-gradient(#e9d8a6 25%,#f6efd2 0 50%,#e9d8a6 0 75%,#f6efd2 0) 0 0/60px 60px','#1d1236','linear-gradient(#3a2a4d 0 65%,#5b3a1e 65%)'];
+let S=null,AC;const A={},K={};
+const k=(...a)=>a.some(v=>K[v]);
+addEventListener('keydown',e=>{K[e.key.toLowerCase()]=1;if(e.key.startsWith('Arrow'))e.preventDefault()});
+addEventListener('keyup',e=>delete K[e.key.toLowerCase()]);
+function snd(f=440,d=.12,t='square'){try{AC=AC||new AudioContext();const o=AC.createOscillator(),g=AC.createGain();o.type=t;o.frequency.value=f;g.gain.value=.04;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2000)}
+const show=h=>$('#stage').innerHTML=h;
+const shake=()=>{const s=$('#sc')||$('#cv');if(s){s.classList.add('shake');setTimeout(()=>s.classList.remove('shake'),300)}};
+const sc=(bg,inner,x='')=>`<div class="scene" id="sc" style="background:${bg};${x}">${inner}</div>`;
+function hud(){if(!S)return;$('#lv').textContent=['I','II','III','IV'][S.lv]+' · '+L[S.lv];$('#hp').textContent='❤️'.repeat(S.hp)+'🖤'.repeat(3-S.hp);$('#cd').style.width=Math.max(0,S.can)+'%'}
+function addJ(e,t){S.j.push({e,t,n:1});S.last=S.j[S.j.length-1];toast('Nouvel indice dans ton journal 📓')}
+function hurt(){snd(110,.3,'sawtooth');S.hp--;hud();shake();if(S.hp<=0)lose('Tu as perdu tous tes cœurs : le manoir t’a eu !');else toast('Aïe ! −1 ❤️')}
+function lose(m){S.run=false;snd(90,.6,'sawtooth');show(`<div class="card"><h2>💀 Défaite</h2><p>${m}</p><div class="row"><button id="pl">Rejouer</button><button id="tt" class="s">Écran titre</button></div></div>`)}
+function title(){S=null;$('#hud').hidden=true;show(`<svg viewBox="0 0 300 150" style="width:min(340px,85%);margin:0 auto;display:block" stroke="#140a22" stroke-width="4" stroke-linejoin="round"><circle cx="250" cy="30" r="18" fill="#ffe9a8"/><rect x="60" y="60" width="180" height="80" fill="#6c4aa0"/><path d="M45 62L150 12 255 62z" fill="#3d2470"/><rect x="130" y="95" width="40" height="45" rx="18" fill="#8a5a2b"/><rect x="80" y="75" width="28" height="28" fill="#ffd166"/><rect x="192" y="75" width="28" height="28" fill="#ffd166"/></svg><div class="gh">👻</div><h1 class="big" style="font-size:clamp(44px,12vw,84px);line-height:.95;margin:0">Le Manoir<br>des Secrets</h1><p>Une enquête cartoon en 4 épreuves. Un seul coupable.</p><div class="row"><button id="en">🔍 Enquêtes</button><button id="pl" class="s">🎲 Épreuves</button><button id="hw" class="s">❓ Commandes</button></div>`)}
+A.tt=title;
+A.hw=()=>show(`<div class="card" style="text-align:left"><h2>Comment jouer</h2><p>🕯️ <b>Ta bougie</b> est ton temps : elle fond de plus en plus vite. À zéro, c’est perdu. ❤️ Tu as 3 cœurs.</p><p>🔍 <b>Bibliothèque</b> : clique sur les objets cachés (listés en haut). Une erreur coûte de la bougie. 💡 L’indice en coûte aussi.</p><p>🧪 <b>Cuisine</b> : mémorise la séquence de fioles, puis répète-la.</p><p>👻 <b>Couloir</b> : flèches, ZQSD ou WASD (ou touche l’écran). Évite les lanternes.</p><p>🔐 <b>Bureau</b> : ▲ ▼ pour régler le code du coffre. 📓 Le journal est ton meilleur ami.</p><p>⚖️ À la fin, croise les indices et accuse le bon suspect.</p><button id="tt">Retour</button></div>`);
+function newGame(){const d=shuf([1,2,3,4,5,6,7,8,9]).slice(0,3);S={lv:0,hp:3,can:100,j:[],c:R(3),d,code:[...d].sort((a,b)=>b-a).join(''),run:false};$('#hud').hidden=false;intro()}
+A.pl=newGame;
+function intro(){S.run=false;hud();show(`<div class="card"><h2>${L[S.lv]}</h2><p>${IN[S.lv]}</p><button id="go">Entrer</button></div>`)}
+A.go=()=>{S.run=true;[lvl1,lvl2,lvl3,lvl4][S.lv]()};
+function winLvl(){S.run=false;S.can=Math.min(100,S.can+20);hud();snd(660,.3,'triangle');show(`<div class="card"><h2>✅ Épreuve réussie !</h2><p>La bougie regagne un peu de flamme (+20 🕯️).</p><p><b>${S.last.e} ${S.last.t}</b></p><button id="nx">Continuer</button></div>`)}
+A.nx=()=>{if(S.lv==3)accuse();else{S.lv++;intro()}};
+A.jb=()=>{if(!S)return;S.pause=true;$('#ov').innerHTML=`<div class="card"><h2>📓 Journal</h2>${S.j.length?S.j.map(j=>`<div class="cl">${j.e} ${j.t}</div>`).join(''):'<p>Aucun indice pour l’instant…</p>'}<p style="text-align:center"><button id="cj">Fermer</button></p></div>`;$('#ov').hidden=false};
+A.cj=()=>{$('#ov').hidden=true;if(S)S.pause=false};
+document.addEventListener('click',e=>{const b=e.target.closest('button[id]');if(b&&A[b.id])A[b.id]()});
+setInterval(()=>{if(S&&S.run&&!S.pause){S.can-=RATE[S.lv]*.25;hud();if(S.can<=0)lose('La bougie s’est éteinte… les secrets du manoir restent dans l’ombre.')}},250);
+
+/* Épreuve 1 : objets cachés */
+function lvl1(){
+ const T=[['👣','shoe'],['📜','note'],['🗝️','key']],D=['📚','🏺','🕷️','🪶','🦉','🧸','🎩','🍄','🪑','🔔','🧦','📕','🪴','🎲','💍','🕰️'];
+ let left=3,h='';
+ shuf([...T.map(t=>({e:t[0],id:t[1]})),...Array.from({length:46},()=>({e:D[R(D.length)]}))]).forEach(o=>h+=`<span class="it" data-id="${o.id||''}" style="left:${5+R(90)}%;top:${8+R(84)}%;font-size:${20+R(10)}px">${o.e}</span>`);
+ show(`<div class="card">Trouve : ${T.map(t=>`<span id="t_${t[1]}" style="font-size:26px">${t[0]}</span>`).join(' ')}</div>${sc(BG[0],h)}<div class="row"><button id="hint" class="s">💡 Indice (−10 🕯️)</button></div>`);
+ $('#hint').onclick=()=>{const t=$('.it[data-id]:not([data-id=""]):not(.ok)');if(t&&S.run){S.can-=10;t.classList.add('bl');setTimeout(()=>t.classList.remove('bl'),1600)}};
+ $('#sc').onclick=e=>{const t=e.target;if(!S.run)return;
+  if(!t.classList.contains('it')){S.can-=2;snd(150);return}
+  if(!t.dataset.id){S.can-=4;snd(150);shake();return}
+  t.classList.add('ok');snd(700,.15);$('#t_'+t.dataset.id).style.opacity=.25;
+  const c=SUS[S.c],id=t.dataset.id;
+  if(id=='shoe')addJ('👣',`Empreintes dans la cendre : chaussures ${c.p}.`);
+  if(id=='note')addJ('📜',`Note déchirée : « Code du coffre : les chiffres ${S.d.join(', ')}, du plus grand au plus petit. »`);
+  if(id=='key')addJ('🗝️','Une petite clé dorée… le coffre du bureau, sûrement.');
+  if(--left==0)winLvl()};
+}
+
+/* Épreuve 2 : séquence de fioles */
+function lvl2(){
+ const C=['#ef476f','#4cc9f0','#06d6a0','#ffd166'];let r=0,seq=[],pos=0,inp=false;
+ show(`<div class="card" id="msg"></div>${sc(BG[1],`<div class="row" style="height:100%">${C.map((c,i)=>`<button class="bt" data-i="${i}" style="background:${c}">🧪</button>`).join('')}</div>`)}`);
+ const B=[...document.querySelectorAll('.bt')],ok=()=>S&&S.run&&S.lv==1;
+ const fl=i=>{B[i].classList.add('on');snd(300+i*120,.25,'triangle');setTimeout(()=>B[i].classList.remove('on'),350)};
+ function play(){inp=false;pos=0;$('#msg').textContent=`Manche ${r+1}/3 : observe…`;seq.forEach((v,j)=>setTimeout(()=>ok()&&fl(v),700+j*Math.max(380,620-r*80)));setTimeout(()=>{if(ok()){inp=true;$('#msg').textContent=`Manche ${r+1}/3 : à toi ! (${seq.length} fioles)`}},700+seq.length*Math.max(380,620-r*80))}
+ function next(){seq=Array.from({length:3+r},()=>R(4));play()}
+ B.forEach(b=>b.onclick=()=>{if(!inp||!ok())return;const i=+b.dataset.i;fl(i);
+  if(i!==seq[pos]){inp=false;hurt();if(S.hp>0)setTimeout(()=>ok()&&play(),900);return}
+  if(++pos==seq.length){inp=false;if(++r==3){addJ('👃',`Une odeur ${SUS[S.c].o} flotte dans la cuisine : le coupable est passé par là.`);winLvl()}else setTimeout(()=>ok()&&next(),800)}});
+ next();
+}
+
+/* Épreuve 3 : infiltration */
+function lvl3(){
+ show(`<div class="card">⌨️ Flèches / ZQSD / WASD ou touche l’écran. Évite les lanternes et rejoins la porte 🚪 ! La 🕯️ rend 10 de bougie.</div><canvas id="cv" width="640" height="360" class="scene" style="height:auto;width:100%;touch-action:none;background:#1d1236"></canvas>`);
+ const cv=$('#cv'),c=cv.getContext('2d'),id=S.tok=Math.random(),p={x:30,y:180};let t=0,last=performance.now(),tg=null,pk=true;
+ cv.onpointerdown=cv.onpointermove=e=>{if(e.buttons){const r=cv.getBoundingClientRect();tg={x:(e.clientX-r.left)*640/r.width,y:(e.clientY-r.top)*360/r.height}}};
+ cv.onpointerup=cv.onpointerleave=()=>tg=null;
+ (function f(n){
+  if(S.tok!==id||!S.run)return;requestAnimationFrame(f);
+  const dt=Math.min(.05,(n-last)/1e3);last=n;if(S.pause)return;t+=dt;
+  let dx=k('arrowright','d')-k('arrowleft','q','a'),dy=k('arrowdown','s')-k('arrowup','z','w');
+  if(!dx&&!dy&&tg){const ex=tg.x-p.x,ey=tg.y-p.y,d=Math.hypot(ex,ey);if(d>6){dx=ex/d;dy=ey/d}}
+  const m=Math.max(1,Math.hypot(dx,dy));p.x=Math.min(630,Math.max(10,p.x+dx/m*150*dt));p.y=Math.min(345,Math.max(15,p.y+dy/m*150*dt));
+  const G=[[150,0,1.1],[290,2,1.5],[430,4,1.9]].map(([a,b,s])=>({x:a,y:180+150*Math.sin(t*s+b)})).concat([{x:560+85*Math.cos(t*1.7),y:180+85*Math.sin(t*1.7)}]);
+  c.clearRect(0,0,640,360);for(let i=0;i<8;i++){c.fillStyle=i%2?'#2b1a4d':'#251543';c.fillRect(i*80,0,80,360)}
+  c.font='32px serif';c.textAlign='center';c.textBaseline='middle';c.fillText('🚪',615,180);if(pk)c.fillText('🕯️',360,335);
+  G.forEach(o=>{const g=c.createRadialGradient(o.x,o.y,4,o.x,o.y,48);g.addColorStop(0,'#ffe566aa');g.addColorStop(1,'#ffe56600');c.fillStyle=g;c.beginPath();c.arc(o.x,o.y,48,0,7);c.fill();c.fillText('👻',o.x,o.y)});
+  c.fillText('🕵️',p.x,p.y);
+  if(pk&&Math.hypot(p.x-360,p.y-335)<24){pk=false;S.can=Math.min(100,S.can+10);snd(800,.15);toast('+10 🕯️')}
+  if(G.some(o=>Math.hypot(o.x-p.x,o.y-p.y)<34)){p.x=30;p.y=180;tg=null;hurt()}
+  else if(p.x>600&&Math.abs(p.y-180)<45){addJ('👻',`Un fantôme-témoin murmure : « Le coupable a frappé de la main ${SUS[S.c].m}. »`);winLvl()}
+ })(performance.now());
+}
+
+/* Épreuve 4 : coffre */
+function lvl4(){
+ const d=[0,0,0];
+ show(`<div class="card">Règle les 3 chiffres du coffre. Un doute ? Ouvre ton journal 📓.</div>${sc(BG[3],`<div style="display:grid;place-items:center;height:100%;gap:8px"><div class="row">${d.map((_,i)=>`<div><button class="s" data-u="${i}">▲</button><div class="dg" id="d${i}">0</div><button class="s" data-v="${i}">▼</button></div>`).join('')}</div><button id="op">🔓 Ouvrir</button></div>`)}`);
+ const up=()=>d.forEach((v,i)=>$('#d'+i).textContent=v);
+ $('#sc').onclick=e=>{const b=e.target.closest('button');if(!b||!S.run)return;snd(400,.05);
+  if(b.dataset.u!=null){const i=+b.dataset.u;d[i]=(d[i]+1)%10;up()}
+  if(b.dataset.v!=null){const i=+b.dataset.v;d[i]=(d[i]+9)%10;up()}
+  if(b.id=='op'){if(d.join('')===S.code){addJ('📄','Testament : Lord Vance allait déshériter l’un de ses proches. Le mobile est là. Il est temps d’accuser !');winLvl()}else{S.can-=10;snd(120,.3,'sawtooth');shake();toast('Clac… mauvais code (−10 🕯️)')}}};
+}
+
+/* Accusation */
+function accuse(){S.run=false;hud();
+ show(`<h2>⚖️ L’heure de l’accusation</h2><div class="card" style="text-align:left">${S.j.map(j=>`<div class="cl">${j.e} ${j.t}</div>`).join('')}</div><div class="row suspects">${SUS.map((s,i)=>`<div class="card"><div style="font-size:52px">${s.e}</div><b>${s.n}</b><br><small>${s.r}</small><p style="text-align:left">👣 Pieds ${s.p}<br>👃 Odeur ${s.o}<br>✋ Main ${s.m}</p><button data-a="${i}">Accuser</button></div>`).join('')}</div>`);
+ $('#stage').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;$('#stage').onclick=null;const i=+b.dataset.a,q=SUS[S.c];
+  if(i===S.c){const st=1+(S.hp>1)+(S.can>35);snd(880,.5,'triangle');show(`<div class="gh">${q.e}</div><div class="card"><h2>🎉 Affaire résolue !</h2><p><b>${q.n}</b> avoue : l’héritage valait bien un crime… mais pas ton flair.</p><p style="font-size:30px;margin:0">${'⭐'.repeat(st)}${'☆'.repeat(3-st)}</p><p>Cœurs : ${S.hp}/3 · Bougie : ${Math.round(S.can)}%</p><div class="row"><button id="pl">Rejouer (nouveau coupable)</button><button id="tt" class="s">Écran titre</button></div></div>`)}
+  else lose(`Tu as accusé ${SUS[i].n}, mais le vrai coupable était ${q.n} ${q.e}. Relis bien les indices !`)};
+}
+/* ===== ENQUÊTES (moteur de données : ajouter une histoire = ajouter un objet dans ST) ===== */
+const DF=[{n:`Détective débutant`,e:`🔰`,T:16,sus:99,pr:1},{n:`Enquêteur confirmé`,e:`🕵️`,T:12,sus:3,pr:1},{n:`Maître du mensonge`,e:`🎭`,T:9,sus:2,pr:2}];
+const DFD=[`16 actions · indices visibles · menteurs repérables · 3 aides · une seconde chance à l’accusation.`,`12 actions · objets cachés (fouille deux fois) · menteurs · méfiance (3 erreurs) · accusation sans appel.`,`9 actions · aucune aide · complices qui mentent · faux indices · un lieu se verrouille · 2 preuves exigées.`];
+const LK=[`Le testament falsifié`,`Le dîner empoisonné`,`Le fantôme de la chambre 13`,`La dernière réception`];
+let SV={d:{},e:{}},G=null,sd=1;try{SV=JSON.parse(localStorage.getItem(`mds1`))||SV}catch(e){}
+const sv=()=>{try{localStorage.setItem(`mds1`,JSON.stringify(SV))}catch(e){}};
+const ST=[{id:`a`,t:`Le meurtre du propriétaire`,e:`🔪`,q:`Qui a tué Lord Vance ?`,culp:`pin`,
+ intro:`Pendant la réception, Lord Alaric Vance est retrouvé mort dans son bureau. Cinq invités, cinq secrets. L’horloge tourne : fouille, interroge, confronte… puis accuse.`,
+ ev:{t:5,tx:`⚡ Une dispute éclate : Zélie accuse Lila d’avoir fouillé ses affaires !`,lk:`bur`},
+ pl:{bur:[`Bureau`,`📚`],jar:[`Jardin`,`🌹`],cui:[`Cuisine`,`🍳`],sal:[`Salon`,`🛋️`]},
+ ch:[
+ {id:`bri`,n:`Iris Brioche`,e:`👩‍🍳`,p:`Bougonne et protectrice`,tell:`Elle triture son tablier.`,al:[`Aux fourneaux, avec M. Corbeau venu chercher du vin.`],re:`Lila ? Je l’ai élevée. Personne ne lui fera de mal.`,se:`Je sers en cachette le vieux bordeaux de Monsieur… ce n’est pas un crime !`,rl:`A élevé Lila`,
+  cf:{a4:[`Corbeau et ses dettes ? Il était avec moi à la cave, je le jure !`,`a8`]}},
+ {id:`cor`,n:`Gaspard Corbeau`,e:`🤵`,p:`Raide, poli, impénétrable`,tell:`Il jette un œil au docteur avant de répondre.`,l:2,al:[`À la cave avec Mme Brioche.`,`Je servais au salon, seul. Je n’ai rien vu.`],re:`Le docteur est un vieil ami de Monsieur. Trop, peut-être.`,se:`J’ai des dettes de jeu. Monsieur le savait.`,rl:`Complice potentiel du docteur ?`,
+  cf:{a4:[`Oui, des dettes. Mais ce soir j’ai vu le Dr Pinson sortir du couloir du bureau, pâle comme un linge.`,`a5`,1],a8:[`…Très bien. J’ai vu le docteur sortir du couloir du bureau.`,`a5`,1]}},
+ {id:`lil`,n:`Lila Vance`,e:`👧`,p:`Vive et nerveuse`,tell:`Elle cache une bague sous sa manche.`,al:[`Au jardin avec le palefrenier… mon fiancé secret.`],re:`Oncle Alaric voulait me marier à un autre. Ça ne fait pas de moi une meurtrière !`,se:`Je suis mariée en secret.`,rl:`Nièce de la victime`,
+  cf:{a9:[`Je l’ai perdu avant le dîner ! Demandez à Iris.`,`a10`]}},
+ {id:`pin`,n:`Octave Pinson`,e:`🧑‍⚕️`,p:`Charmeur, trop poli`,tell:`Il frotte ses mains nues, comme s’il cherchait des gants.`,l:1,al:[`J’ai quitté la terrasse pour voir Alaric au bureau.`,`Sur la terrasse, toute la soirée. Demandez à qui vous voulez.`],re:`Alaric ? Mon plus vieil ami, voyons.`,se:`Moi ? Aucun secret, cher ami.`,rl:`Ami d’Alaric, soigne la famille`,
+  cf:{a1:[`Une fraude… oui, j’ai maquillé des diagnostics. Mais je ne l’ai pas tué !`,`a6`,1],a2:[`Ces gants ne prouvent rien !`],a5:[`Corbeau ment ! … Bon. J’y étais. Il était déjà mort. (ses mains tremblent)`,0,1]}},
+ {id:`zel`,n:`Zélie Roux`,e:`🕵️‍♀️`,p:`Curieuse, toujours en train de noter`,tell:`Elle griffonne dans un carnet.`,al:[`Au salon, à photographier la réception pour mon article.`],re:`Lila m’a aidée à entrer. Elle me doit un service.`,se:`Je suis journaliste infiltrée : j’enquête sur les ordonnances du docteur.`,rl:`Alliée de Lila`,
+  cf:{a3:[`22 h 10 ? J’ai une photo du docteur qui entre dans le couloir à 22 h 05 !`,`a7`,1]}}],
+ cl:{a1:{t:`Lettre de menace : « Pinson, j’exposerai ta fraude demain. — A. V. »`,pl:[`bur`,`sal`],pf:1,ab:[`pin`]},
+  a2:{t:`Gants tachés d’encre rouge cachés dans les rosiers.`,pl:[`jar`,`cui`],h:1,pf:1,ab:[`pin`]},
+  a3:{t:`L’horloge du bureau est brisée : 22 h 10.`,pl:[`bur`],ab:[]},
+  a4:{t:`Reconnaissance de dette de M. Corbeau (5 000 £). Piste séduisante…`,pl:[`sal`,`cui`],ab:[`cor`]},
+  a9:{t:`Un mouchoir brodé « L. » près du bureau. (trompeur ?)`,pl:[`bur`,`jar`],hd:1,ab:[`lil`]},
+  a5:{t:`Corbeau a vu le Dr Pinson sortir pâle du couloir du bureau.`,pf:1,ab:[`pin`]},
+  a6:{t:`Pinson avoue sa fraude médicale mais nie le crime.`,ab:[`pin`]},
+  a7:{t:`Photo de Zélie : Pinson entre dans le couloir du bureau à 22 h 05.`,pf:1,sc:1,ab:[`pin`]},
+  a8:{t:`Mme Brioche certifie que Corbeau était à la cave de 22 h à 22 h 30.`,ab:[`cor`]},
+  a10:{t:`Lila avait déjà perdu son mouchoir au dîner : le piège est écarté.`,ab:[`lil`]}},
+ en:{good:[`Le docteur démasqué`,`Lettre, gants et témoin : Pinson s’effondre. Lila hérite en paix, Corbeau garde sa place et Brioche sert un dernier bordeaux en ton honneur.`],
+  sec:[`Le scoop du siècle`,`La photo de Zélie fait la une : Pinson est confondu, son réseau d’ordonnances aussi. Tout le comté te doit une fière chandelle.`],
+  part:[`Faute de preuves`,`Tu avais le bon nom, mais pas assez de preuves : Pinson est relâché et quitte le pays. L’enquête reste ouverte…`],
+  bad:[`Un innocent accusé`,`Tu accuses la mauvaise personne. Pinson sourit en servant le thé tandis que le manoir s’enfonce dans les rumeurs.`]}},
+{id:`b`,t:`La disparition de l’héritière`,e:`🗝️`,q:`Qui a aidé Margaux à disparaître ?`,culp:`the`,
+ intro:`Margaux Vance, héritière du manoir, s’est volatilisée de sa chambre fermée à clé. Fuite, enlèvement ou mise en scène ? Reconstitue ses derniers pas avant que la piste ne refroidisse.`,
+ ev:{t:5,tx:`🚪 Une porte claque : Rémy quitte le salon furieux et fait sceller la chambre !`,lk:`cha`},
+ pl:{cha:[`Chambre de Margaux`,`🛏️`],jar:[`Jardin`,`🌳`],cui:[`Cuisine`,`🍳`],bur:[`Bureau`,`📚`]},
+ ch:[
+ {id:`pel`,n:`Pélagie Roux`,e:`👵`,p:`Stricte et dévouée`,tell:`Elle lisse sans cesse sa jupe.`,al:[`Je dormais : mon somnifère du soir, hélas.`],re:`Margaux est comme ma fille. Rémy, lui, ne pense qu’à l’argent.`,se:`Je prends un somnifère depuis des années. Je n’ai rien entendu.`,rl:`Gouvernante de Margaux`,cf:{b4:[`Le pauvre Rémy a toujours eu des dettes, mais il a passé la nuit au fumoir.`,`b8`]}},
+ {id:`rem`,n:`Rémy Vance`,e:`🧔`,p:`Cassant et pressé`,tell:`Il vérifie son portefeuille vide.`,al:[`Au fumoir avec Maître Delcourt.`],re:`Margaux m’empêchait de gérer le domaine. Je ne le nie pas.`,se:`Je dois 40 000 £ à des créanciers. Rien à voir avec elle !`,rl:`Oncle et tuteur`,cf:{b4:[`Mes dettes ! … Oui. Mais je n’ai pas touché Margaux.`]}},
+ {id:`the`,n:`Théo Marchand`,e:`🧑‍🌾`,p:`Doux et taiseux`,tell:`Ses bottes sont étrangement propres.`,l:1,al:[`J’ai rangé l’échelle derrière la serre. Elle était mouillée.`,`Dans ma cabane, toute la nuit. L’échelle ? Pas touchée.`],re:`Mademoiselle Margaux est la seule à m’avoir toujours traité en égal.`,se:`Je ne dis rien. Rien du tout.`,rl:`Ami proche de Margaux`,
+  cf:{b1:[`…Elle m’a demandé de l’aider. Elle voulait partir.`,`b9`,1],b5:[`Ce billet… oui, c’est le mien. Je l’ai acheté pour elle.`,`b9`,1]}},
+ {id:`zoe`,n:`Zoé Lenoir`,e:`💁‍♀️`,p:`Bavarde et peureuse`,tell:`Elle regarde sans cesse vers l’escalier.`,l:2,al:[`Dans l’office, puis j’ai entendu des pas dans le couloir.`,`Rien vu, rien entendu, j’étais couchée.`],re:`Margaux me confiait tout. Presque tout.`,se:`Je lis parfois son journal… pardon !`,rl:`Confidente de Margaux`,cf:{b2:[`Alors c’est vrai ?! Elle m’a montré un jour un passage derrière la bibliothèque…`,`b6`,1]}},
+ {id:`edm`,n:`Étienne Delcourt`,e:`👨‍⚖️`,p:`Froid et méthodique`,tell:`Il consulte sa montre à gousset.`,al:[`Au fumoir avec Rémy, à parler testament.`],re:`Rémy était nerveux. Margaux refusait le mariage arrangé.`,se:`J’ai rédigé le contrat de mariage. Je le regrette.`,rl:`Avocat de la famille`,cf:{b2:[`Le mariage… oui. C’est moi qui l’ai monté, avec son oncle.`]}}],
+ cl:{b1:{t:`Fenêtre fermée de l’intérieur, mais boue sur l’appui et échelle mouillée.`,pl:[`cha`,`jar`],pf:1,ab:[`the`]},
+  b2:{t:`Journal de Margaux : « Je refuse ce mariage. Je partirai cette nuit. »`,pl:[`cha`,`bur`],h:1,pf:1,ab:[`the`]},
+  b3:{t:`Les verrous de la chambre sont intacts : personne n’a forcé la porte.`,pl:[`cha`],ab:[]},
+  b4:{t:`Lettre de créanciers menaçant Rémy. Mobile tentant…`,pl:[`bur`,`cui`],ab:[`rem`]},
+  b5:{t:`Billet de train pour Lyon au nom de T. Marchand (2 places).`,pl:[`jar`,`cui`],h:1,pf:1,ab:[`the`]},
+  b7:{t:`Empreinte de bague au bureau. (trompeur ? c’est celle de Rémy, qui cherchait des papiers)`,pl:[`bur`],hd:1,ab:[`rem`]},
+  b6:{t:`Passage secret derrière la bibliothèque : Margaux y a laissé un mot.`,pf:1,sc:1,ab:[`the`]},
+  b8:{t:`Pélagie atteste que Rémy a passé la nuit au fumoir avec l’avocat.`,ab:[`rem`]},
+  b9:{t:`Théo avoue avoir aidé Margaux à partir de son plein gré.`,pf:1,ab:[`the`]}},
+ en:{good:[`Liberté`,`Tu comprends que Margaux a fui un mariage forcé avec l’aide de Théo. Elle t’écrit de Lyon : le manoir lui appartient, mais elle choisira sa vie.`],
+  sec:[`Retrouvailles`,`Par le passage secret, tu retrouves Margaux cachée dans la vieille chapelle. Elle revient, tête haute, et annule elle-même le mariage devant la famille.`],
+  part:[`Piste froide`,`Tu soupçonnes Théo sans pouvoir prouver qu’il l’a aidée. Rémy lance des recherches et Margaux reste introuvable…`],
+  bad:[`L’oncle injustement accusé`,`Rémy est arrêté à tort. Pendant ce temps, Margaux file vers Lyon, et le domaine sombre dans le scandale.`]}}];
+const ch=i=>G.s.ch.find(c=>c.id==i),CL=i=>G.s.cl[i],T=()=>DF[G.d].T;
+A.en=()=>{G=null;$(`#hud`).hidden=true;$(`#ov`).hidden=true;const un=i=>i==0||Object.keys(SV.d).some(k=>k[0]==ST[i-1].id);
+ show(`<h2>🔍 Choisis ton enquête</h2><div class="row">${DF.map((d,i)=>`<button class="${i==sd?'':'s'}" data-df="${i}">${d.e} ${d.n}</button>`).join('')}</div><p>${DFD[sd]}</p><div class="row suspects">${ST.map((s,i)=>{const u=un(i),f=[0,1,2].filter(d=>SV.d[s.id+d]).map(d=>DF[d].e).join('');return `<div class="card ${u?'':'lk'}"><div style="font-size:44px">${s.e}</div><b>${s.t}</b><p><small>Fins : ${(SV.e[s.id]||[]).length}/4 ${f?'· ✅ '+f:''}</small></p>${u?`<button data-st="${i}">Enquêter</button>`:`<small>🔒 Termine l’histoire précédente</small>`}</div>`}).join('')}${LK.map((t,i)=>`<div class="card lk"><div style="font-size:44px">🔒</div><b>${t}</b><p><small>Histoire ${i+3} · bientôt</small></p></div>`).join('')}</div><button id="tt" class="s">Retour</button>`)};
+function begin(si,d){const s=ST[si];G={si,s,d,t:0,c:{},tm:[],ps:{},pos:{},br:{},su:{},as:{},rl:{},mk:{},lk:{},h:[3,1,0][d],tr:1,ev:0,pf:[]};
+ for(const i in s.cl){const c=s.cl[i];if(c.pl)G.pos[i]=c.pl[R(c.pl.length)]}ui(s.intro)}
+function addC(i){if(G.c[i])return;G.c[i]=1;snd(700,.12);toast(`📓 Nouvel indice !`)}
+function adv(){G.t++;const e=G.s.ev;if(!G.ev&&G.t>=e.t){G.ev=1;G.news=e.tx;if(G.d==2){G.lk[e.lk]=1;G.news+=` 🔒 ${G.s.pl[e.lk][0]} est verrouillé !`}}}
+function chk(){if(G.t>=T()){$(`#ov`).hidden=true;acc(`⏰ Le temps est écoulé : la police arrive ! Il faut accuser maintenant.`);return 1}}
+function ui(m){const L=T()-G.t,wk=R(G.s.ch.length);
+ show(`<div class="row" style="justify-content:space-between"><b class="big" style="font-size:22px">${G.s.e} ${G.s.t}</b><span>${DF[G.d].e} ⏱ ${L}/${T()}</span></div><div class="bar"><i style="width:${100*L/T()}%"></i></div><div class="card" style="text-align:left">${m||`Fouille un lieu ou interroge un suspect.`}${G.news?`<br><b>${G.news}</b>`:``}</div><div class="row">${Object.entries(G.s.pl).map(([i,p])=>`<button class="s pb" data-pl="${i}">${G.lk[i]?'🔒':p[1]} ${p[0]}</button>`).join('')}</div><div class="row">${G.s.ch.map((c,i)=>`<div class="card cc" data-ch="${c.id}">${G.mk[c.id]?'<span class="bb">🔖</span>':i==(wk+1)%5?'<span class="bb">💬</span>':''}<div class="pt ${i==wk?'wk':''}" style="animation-delay:-${i}s">${c.e}</div><b>${c.n.split(' ')[0]}</b><small>${G.su[c.id]>=DF[G.d].sus?'🚫 fermé(e)':'👁️ Observer'}</small></div>`).join('')}</div><div class="row"><button id="ij" class="s">📓 Carnet (${Object.keys(G.c).length})</button><button id="ir" class="s">🕸️ Relations</button><button id="ih" class="s">💡 Aide (${G.h})</button><button id="ia">⚖️ Accuser</button><button id="en" class="s">⌂</button></div>`);G.news=0}
+function search(p){if(G.lk[p])return ui(`🔒 Ce lieu est verrouillé : l’occasion est passée.`);
+ const f=Object.keys(G.pos).filter(i=>{const c=CL(i);return G.pos[i]==p&&!G.c[i]&&(G.d==0||!c.h||G.ps[p]>0)&&(!c.hd||G.d==2)});
+ G.ps[p]=(G.ps[p]||0)+1;f.forEach(addC);adv();let m=f.length?`Tu fouilles ${G.s.pl[p][0]} et trouves :<br>${f.map(i=>`<b>${CL(i).t}</b>`).join('<br>')}`:`Tu fouilles ${G.s.pl[p][0]}… rien de nouveau${G.d>0&&G.ps[p]==1?` (un objet bien caché, peut-être ?)`:``}.`;
+ if(!chk())ui(m)}
+function talk(id,m,pn){G.cur=id;const c=ch(id),d=G.d,lk=G.su[id]>=DF[d].sus,tl=d==0?`${c.tell}${c.l==1?' 😰 <b>Il/elle semble mentir.</b>':''}`:d==1?c.tell:``;
+ $(`#ov`).innerHTML=`<div class="card"><div class="row" style="justify-content:flex-start"><div class="pt ${pn?'pn':''}">${c.e}</div><div><b>${c.n}</b><br><small>${c.p}</small></div></div><p><i>${tl}</i></p><div class="cl">${m||`Il/elle vous observe, méfiant(e).`}</div>${lk?`<p>🚫 Trop méfiant(e), il/elle ne répond plus.</p>`:G.cf==id?`<p>Montre quel indice ?</p><div class="row">${Object.keys(G.c).map(i=>`<button class="s" data-cf="${i}" style="font-size:14px">${CL(i).t.slice(0,48)}…</button>`).join('')||'Aucun indice.'}</div>`:`<div class="row" style="margin:8px 0"><button data-q="al">Alibi ⏱1</button><button data-q="re">Relations ⏱1</button><button data-q="se">Secret ⏱1</button><button data-q="cf">Confronter ⏱1</button></div>`}<div class="row"><button id="mk" class="s">🔖 Marquer</button><button id="cx" class="s">Fermer</button></div></div>`;$(`#ov`).hidden=false}
+function ask(id,q){const c=ch(id),lie=c.l&&G.d>=(c.l==2?2:1)&&!G.br[id],k=id+q+(G.br[id]?'b':'');
+ const a=q=='al'?c.al[lie&&c.al[1]?1:0]:q=='re'?c.re:c.se;
+ if(!G.as[k]){G.as[k]=1;adv();G.tm.push(`💬 ${c.n} : « ${a} »`);if(q=='re')G.rl[id]=1}
+ G.cf=0;if(!chk())talk(id,`« ${a} »`)}
+function conf(id,i){const c=ch(id),e=c.cf&&c.cf[i];G.cf=0;adv();let m;
+ if(e){m=`« ${e[0]} »`;if(e[1])addC(e[1]);if(e[2])G.br[id]=1}
+ else if(CL(i).ab.includes(id))m=`${c.n} encaisse sans un mot, mais son regard trahit une gêne.`;
+ else{G.su[id]=(G.su[id]||0)+1;m=`« Pourquoi me montrer ça ? Vous m’accusez ? » (méfiance +1)`}
+ if(!chk())talk(id,m,1)}
+A.mk=()=>{G.mk[G.cur]=!G.mk[G.cur];toast(G.mk[G.cur]?`🔖 Suspect marqué`:`Marque retirée`)};
+A.cx=()=>{$(`#ov`).hidden=true;G.cf=0;if(G.pend)G.pend=0;else ui()};
+A.ij=()=>{$(`#ov`).innerHTML=`<div class="card"><h2>📓 Carnet d’enquête</h2>${Object.keys(G.c).map(i=>`<div class="cl">🔎 ${CL(i).t}</div>`).join('')}${G.tm.map(t=>`<div class="cl">${t}</div>`).join('')||''}<p style="text-align:center"><button id="cx">Fermer</button></p></div>`;$(`#ov`).hidden=false};
+A.ir=()=>{$(`#ov`).innerHTML=`<div class="card"><h2>🕸️ Tableau des relations</h2><p><small>Interroge sur les relations pour les révéler.</small></p>${G.s.ch.map(c=>`<div class="cl">${c.e} <b>${c.n}</b> ${G.mk[c.id]?'🔖':''}<br>${G.rl[c.id]?`↔ ${c.rl}`:`↔ ???`}</div>`).join('')}<p style="text-align:center"><button id="cx">Fermer</button></p></div>`;$(`#ov`).hidden=false};
+A.ih=()=>{if(G.h<=0)return toast(`Plus d’aide disponible !`);G.h--;const p=Object.keys(G.pos).find(i=>!G.c[i]&&!CL(i).hd&&!(G.lk[G.pos[i]]));
+ ui(p?`💡 Un indice t’attend vers : <b>${G.s.pl[G.pos[p]][0]}</b>${CL(p).h&&G.d>0?` (bien caché : fouille deux fois)`:``}.`:`💡 Tu as fouillé l’essentiel : confronte les suspects avec tes indices !`)};
+A.ia=()=>acc();
+function acc(m){$(`#ov`).hidden=true;G.sel=null;G.pf=[];show(`<h2>⚖️ Accusation</h2><div class="card">${m||G.s.q}</div><div class="row">${G.s.ch.map(c=>`<div class="card cc" data-ac="${c.id}"><div class="pt">${c.e}</div><b>${c.n.split(' ')[0]}</b>${G.mk[c.id]?'<span class="bb">🔖</span>':''}</div>`).join('')}</div>${G.t<T()?`<button id="ib" class="s">Retour à l’enquête</button>`:``}`)}
+A.ib=()=>ui();
+function proof(){const n=DF[G.d].pr;show(`<h2>⚖️ Preuves contre ${ch(G.sel).n}</h2><div class="card">Choisis ${n} indice${n>1?'s':''} qui le/la prouvent (${G.pf.length}/${n}).</div><div class="row">${Object.keys(G.c).map(i=>`<button class="${G.pf.includes(i)?'':'s'}" data-pf="${i}" style="font-size:14px;max-width:320px">${CL(i).t}</button>`).join('')}</div><div class="row"><button id="ok">Confirmer l’accusation</button><button id="ia" class="s">Changer de suspect</button></div>`)}
+A.ok=()=>{const s=G.s,okk=G.sel==s.culp,pf=G.pf.filter(i=>CL(i).pf).length;let e;
+ if(okk&&pf>=DF[G.d].pr)e=G.pf.some(i=>CL(i).sc)?`sec`:`good`;else if(okk)e=`part`;
+ else if(G.d==0&&G.tr-->0)return acc(`❌ Ce n’est pas ça ! (Débutant : une dernière chance)`);else e=`bad`;
+ SV.e[s.id]=[...new Set([...(SV.e[s.id]||[]),e])];if(e==`good`||e==`sec`)SV.d[s.id+G.d]=1;sv();
+ const x=s.en[e],n=SV.e[s.id].length;snd(e==`bad`||e==`part`?100:880,.5,`triangle`);
+ show(`<div class="pt" style="font-size:60px">${e==`bad`?'😢':e==`part`?'😕':'🎉'}</div><div class="card"><h2>${e==`bad`?'💀':e==`part`?'⚠️':'🏆'} ${x[0]}</h2><p>${x[1]}</p><p><b>Conséquences :</b> ${e==`bad`?`${ch(G.sel).n} est accusé(e) à tort ; ${ch(s.culp).n} reste libre.`:e==`part`?`${ch(s.culp).n} échappe à la justice, faute de ${DF[G.d].pr} preuve(s) solide(s).`:`Justice rendue en ${G.t} actions, avec ${Object.keys(G.c).length} indices.`}</p><p>Fins découvertes : ${n}/4 ${n==4?'🌟':''}${e==`sec`?' · <b>Fin secrète !</b>':''}</p><div class="row"><button id="rp">Rejouer (variations)</button><button id="en" class="s">Histoires</button></div></div>`)};
+A.rp=()=>begin(G.si,G.d);
+$(`#ov`).addEventListener(`click`,e=>{const b=e.target.closest(`[data-q],[data-cf]`);if(!b||!G)return;const d=b.dataset;if(d.q==`cf`){G.cf=G.cur;talk(G.cur)}else if(d.q)ask(G.cur,d.q);else conf(G.cur,d.cf)});
+$(`#stage`).addEventListener(`click`,e=>{const b=e.target.closest(`[data-df],[data-st],[data-pl],[data-ch],[data-ac],[data-pf]`);if(!b)return;const d=b.dataset;
+ if(d.df!=null){sd=+d.df;A.en()}else if(d.st!=null)begin(+d.st,sd);else if(!G)return;
+ else if(d.pl)search(d.pl);else if(d.ch)talk(d.ch);else if(d.ac){G.sel=d.ac;G.pf=[];proof()}
+ else if(d.pf){const i=d.pf,x=G.pf.indexOf(i);if(x>=0)G.pf.splice(x,1);else if(G.pf.length<DF[G.d].pr)G.pf.push(i);proof()}});
+title();
+</script></body></html>
